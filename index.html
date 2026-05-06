@@ -94,8 +94,13 @@
                     bird.velocity += bird.gravity;
                     bird.y += bird.velocity;
 
-                    if (bird.y + bird.height >= canvas.height || bird.y <= 0) {
-                        bird.alive = false;
+                    if (bird.y + bird.height >= canvas.height) {
+                        bird.y = canvas.height - bird.height;
+                        bird.velocity = 0;
+                    }
+                    if (bird.y <= 0) {
+                        bird.y = 0;
+                        bird.velocity = 0;
                     }
                 }
             });
