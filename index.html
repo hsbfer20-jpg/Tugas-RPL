@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Local Multiplayer</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #333;
+            font-family: sans-serif;
+        }
+        canvas {
+            border: 4px solid #fff;
+            background-color: #70c5ce;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let frames = 0;
+        let pipes = [];
+        let gameState = 'START'; 
+        let winnerMessage = "";
+
+        const bird1 = { x: 100, y: 200, width: 30, height: 30, velocity: 0, gravity: 0.5, jump: -8, color: '#ff4c4c', alive: true };
+        const bird2 = { x: 100, y: 400, width: 30, height: 30, velocity: 0, gravity: 0.5, jump: -8, color: '#4c4cff', alive: true };
+
+        function resetGame() {
+            bird1.y = 200; bird1.velocity = 0; bird1.alive = true;
+            bird2.y = 400; bird2.velocity = 0; bird2.alive = true;
+            pipes = [];
+            frames = 0;
+            gameState = 'PLAYING';
+            winnerMessage = "";
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (gameState === 'START' || gameState === 'GAMEOVER') {
+                if (e.code === 'Space' || e.code === 'ArrowUp') {
+                    resetGame();
+                }
+                return;
+            }
+            if (e.code === 'Space' && bird1.alive) {
+                bird1.velocity = bird1.jump;
+            }
+            if (e.code === 'ArrowUp' && bird2.alive) {
+                bird2.velocity = bird2.jump;
+            }
+        });
+
+        function update() {
+            if (gameState !== 'PLAYING') return;
+
+            frames++;
+
+            [bird1, bird2].forEach(bird => {
+                if (bird.alive) {
+                    bird.velocity += bird.gravity;
+                    bird.y += bird.velocity;
+
+                    if (bird.y + bird.height >= canvas.height || bird.y <= 0) {
+                        bird.alive = false;
+                    }
+                }
+            });
+
+            if (frames % 120 === 0) {
+                const gap = 160;
+                const pipeWidth = 60;
+                const minHeight = 50;
+                const maxHeight = canvas.height - gap - minHeight;
+                const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
+                pipes.push({ x: canvas.width, topHeight: topHeight, gap: gap, width: pipeWidth });
+            }
+
+            pipes.forEach((pipe, i) => {
+                pipe.x -= 3;
+
+                [bird1, bird2].forEach((bird) => {
+                    if (bird.alive) {
+                        if (bird.x < pipe.x + pipe.width && bird.x + bird.width > pipe.x &&
+                            (bird.y < pipe.topHeight || bird.y + bird.height > pipe.topHeight + pipe.gap)) {
+                            bird.alive = false;
+                        }
+                    }
+                });
+
+                if (pipe.x + pipe.width < 0) {
+                    pipes.splice(i, 1);
+                }
+            });
+
+            if (!bird1.alive && bird2.alive) {
+                winnerMessage = "Pemain 2 (Biru) Menang!";
+                gameState = 'GAMEOVER';
+            } else if (bird1.alive && !bird2.alive) {
+                winnerMessage = "Pemain 1 (Merah) Menang!";
+                gameState = 'GAMEOVER';
+            } else if (!bird1.alive && !bird2.alive) {
+                winnerMessage = "Seri! Keduanya Tereliminasi.";
+                gameState = 'GAMEOVER';
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState === 'START') {
+                ctx.fillStyle = 'black';
+                ctx.textAlign = "center";
+                ctx.font = 'bold 36px Arial';
+                ctx.fillText("Flappy Bird: Local Multiplayer", canvas.width / 2, 200);
+                ctx.font = '24px Arial';
+                ctx.fillStyle = '#ff4c4c';
+                ctx.fillText("Pemain 1 (Merah): Tombol SPASI", canvas.width / 2, 280);
+                ctx.fillStyle = '#4c4cff';
+                ctx.fillText("Pemain 2 (Biru): Tombol PANAH ATAS", canvas.width / 2, 330);
+                ctx.fillStyle = 'black';
+                ctx.fillText("Tekan Spasi atau Panah Atas untuk Mulai", canvas.width / 2, 420);
+                return;
+            }
+
+            ctx.fillStyle = '#2ecc71';
+            pipes.forEach(pipe => {
+                ctx.fillRect(pipe.x, 0, pipe.width, pipe.topHeight);
+                ctx.fillRect(pipe.x, pipe.topHeight + pipe.gap, pipe.width, canvas.height - pipe.topHeight - pipe.gap);
+                ctx.strokeRect(pipe.x, 0, pipe.width, pipe.topHeight);
+                ctx.strokeRect(pipe.x, pipe.topHeight + pipe.gap, pipe.width, canvas.height - pipe.topHeight - pipe.gap);
+            });
+
+            if (bird1.alive) {
+                ctx.fillStyle = bird1.color;
+                ctx.fillRect(bird1.x, bird1.y, bird1.width, bird1.height);
+                ctx.strokeRect(bird1.x, bird1.y, bird1.width, bird1.height);
+            }
+            if (bird2.alive) {
+                ctx.fillStyle = bird2.color;
+                ctx.fillRect(bird2.x, bird2.y, bird2.width, bird2.height);
+                ctx.strokeRect(bird2.x, bird2.y, bird2.width, bird2.height);
+            }
+
+            if (gameState === 'GAMEOVER') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.textAlign = "center";
+                ctx.font = 'bold 40px Arial';
+                ctx.fillText(winnerMessage, canvas.width / 2, canvas.height / 2 - 20);
+                ctx.font = '24px Arial';
+                ctx.fillText("Tekan Spasi atau Panah Atas untuk Main Lagi", canvas.width / 2, canvas.height / 2 + 40);
+            }
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+</html>
