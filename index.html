@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flappy Bird Local Multiplayer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flappy Bird Local Multiplayer Responsive</title>
     <style>
         body {
             display: flex;
@@ -13,11 +13,15 @@
             margin: 0;
             background-color: #333;
             font-family: sans-serif;
+            overflow: hidden;
+            touch-action: none;
         }
         canvas {
-            border: 4px solid #fff;
             background-color: #70c5ce;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            max-width: 100vw;
+            max-height: 100vh;
+            object-fit: contain;
         }
     </style>
 </head>
@@ -60,6 +64,25 @@
                 bird2.velocity = bird2.jump;
             }
         });
+
+        window.addEventListener('touchstart', (e) => {
+            e.preventDefault(); 
+            if (gameState === 'START' || gameState === 'GAMEOVER') {
+                resetGame();
+                return;
+            }
+
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                const screenMiddle = window.innerWidth / 2;
+
+                if (touch.clientX < screenMiddle && bird1.alive) {
+                    bird1.velocity = bird1.jump;
+                } else if (touch.clientX >= screenMiddle && bird2.alive) {
+                    bird2.velocity = bird2.jump;
+                }
+            }
+        }, { passive: false });
 
         function update() {
             if (gameState !== 'PLAYING') return;
@@ -122,14 +145,18 @@
                 ctx.fillStyle = 'black';
                 ctx.textAlign = "center";
                 ctx.font = 'bold 36px Arial';
-                ctx.fillText("Flappy Bird: Local Multiplayer", canvas.width / 2, 200);
-                ctx.font = '24px Arial';
+                ctx.fillText("Flappy Bird: Local Multiplayer", canvas.width / 2, 180);
+                
+                ctx.font = '20px Arial';
                 ctx.fillStyle = '#ff4c4c';
-                ctx.fillText("Pemain 1 (Merah): Tombol SPASI", canvas.width / 2, 280);
+                ctx.fillText("Pemain 1: SPASI atau Sentuh Kiri Layar", canvas.width / 2, 260);
+                
                 ctx.fillStyle = '#4c4cff';
-                ctx.fillText("Pemain 2 (Biru): Tombol PANAH ATAS", canvas.width / 2, 330);
+                ctx.fillText("Pemain 2: PANAH ATAS atau Sentuh Kanan Layar", canvas.width / 2, 310);
+                
                 ctx.fillStyle = 'black';
-                ctx.fillText("Tekan Spasi atau Panah Atas untuk Mulai", canvas.width / 2, 420);
+                ctx.font = '24px Arial';
+                ctx.fillText("Sentuh Layar atau Tekan Tombol untuk Mulai", canvas.width / 2, 400);
                 return;
             }
 
@@ -160,7 +187,7 @@
                 ctx.font = 'bold 40px Arial';
                 ctx.fillText(winnerMessage, canvas.width / 2, canvas.height / 2 - 20);
                 ctx.font = '24px Arial';
-                ctx.fillText("Tekan Spasi atau Panah Atas untuk Main Lagi", canvas.width / 2, canvas.height / 2 + 40);
+                ctx.fillText("Sentuh Layar untuk Main Lagi", canvas.width / 2, canvas.height / 2 + 40);
             }
         }
 
